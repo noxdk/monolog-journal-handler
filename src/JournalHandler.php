@@ -15,13 +15,7 @@ use Throwable;
 
 class JournalHandler extends AbstractProcessingHandler
 {
-    private const FORMAT = '%level_name%: %message% %context% %extra%';
-
-    private const RESERVED_FIELDS = [
-        'MESSAGE',
-        'PRIORITY',
-        'SYSLOG_IDENTIFIER',
-    ];
+    public const FORMAT = '%level_name%: %message% %context% %extra%';
 
     private string $path;
     private bool $isConnected = false;
@@ -82,9 +76,9 @@ class JournalHandler extends AbstractProcessingHandler
     protected function encodeMessage(LogRecord $record): string
     {
         $fields = array_merge([
-            $this->buildMultilineField('MESSAGE', $record->formatted),
-            "PRIORITY={$record->level->toRFC5424Level()}",
-            "SYSLOG_IDENTIFIER=$record->channel",
+            $this->buildField(JournalFields::Message, $record->formatted),
+            $this->buildField(JournalFields::Priority, $record->level->toRFC5424Level()),
+            $this->buildField(JournalFields::SyslogIdentifier, $record->channel),
         ], $this->getAdditionalFields($record));
 
         return implode("\n", $fields) . "\n";
@@ -104,8 +98,8 @@ class JournalHandler extends AbstractProcessingHandler
 
             // Collect first exception
             if (!$collectedException && $value instanceof Throwable) {
-                $fields[] = "CODE_FILE={$value->getFile()}";
-                $fields[] = "CODE_LINE={$value->getLine()}";
+                $fields[] = $this->buildField(JournalFields::CodeFile, $value->getFile());
+                $fields[] = $this->buildField(JournalFields::CodeLine, $value->getLine());
                 $collectedException = true;
                 continue;
             }
@@ -116,7 +110,7 @@ class JournalHandler extends AbstractProcessingHandler
             }
 
             $key = strtoupper($key);
-            if (in_array($key, self::RESERVED_FIELDS, true)) {
+            if (JournalFields::isReserved($key)) {
                 continue;
             }
 
@@ -124,7 +118,7 @@ class JournalHandler extends AbstractProcessingHandler
                 continue;
             }
 
-            $fields[] = $this->buildMultilineField($key, $value);
+            $fields[] = $this->buildField($key, $value);
         }
 
         return $fields;
@@ -146,14 +140,18 @@ class JournalHandler extends AbstractProcessingHandler
     /**
      * @link https://systemd.io/JOURNAL_NATIVE_PROTOCOL In-depth information about how to handle multiline values
      *
-     * @param string $field
-     * @param string $value
+     * @param string|JournalFields $field
+     * @param bool|int|string $value
      * @return string
      */
-    protected function buildMultilineField(string $field, string $value): string
+    protected function buildField(string|JournalFields $field, bool|int|float|string $value): string
     {
+        if ($field instanceof JournalFields) {
+            $field = $field->value;
+        }
+
         // If no newlines are found in the value, we can simply use key=value pair
-        if (!str_contains($value, "\n")) {
+        if (!is_string($value) || !str_contains($value, "\n")) {
             return "$field=$value";
         }
 
