@@ -32,10 +32,13 @@ class JournalHandler extends AbstractProcessingHandler
 
     public function close(): void
     {
+        parent::close();
+
+        $this->isConnected = false;
         if ($this->socket !== null) {
             socket_close($this->socket);
+            $this->socket = null;
         }
-        parent::close();
     }
 
     protected function write(LogRecord $record): void
