@@ -1,6 +1,6 @@
 {
     "name": "noxdk/monolog-journal-handler",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Monolog handler for journald (systemd) written in pure PHP",
     "type": "library",
     "license": "MIT",

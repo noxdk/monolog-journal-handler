@@ -144,10 +144,10 @@ class JournalHandler extends AbstractProcessingHandler
      * @link https://systemd.io/JOURNAL_NATIVE_PROTOCOL In-depth information about how to handle multiline values
      *
      * @param string|JournalFields $field
-     * @param bool|int|string $value
+     * @param bool|int|float|string|Stringable $value
      * @return string
      */
-    protected function buildField(string|JournalFields $field, bool|int|float|string $value): string
+    protected function buildField(string|JournalFields $field, bool|int|float|string|Stringable $value): string
     {
         if ($field instanceof JournalFields) {
             $field = $field->value;
