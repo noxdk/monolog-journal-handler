@@ -147,7 +147,7 @@ class JournalHandler extends AbstractProcessingHandler
      * @param bool|int|float|string|Stringable $value
      * @return string
      */
-    protected function buildField(string|JournalFields $field, bool|int|float|string|Stringable $value): string
+    protected function buildField(string|JournalFields $field, bool|int|float|string|Stringable|null $value): string
     {
         if ($field instanceof JournalFields) {
             $field = $field->value;
